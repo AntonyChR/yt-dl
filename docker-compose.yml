@@ -1,0 +1,10 @@
+services:
+    yt:
+        image: yt-dl
+        container_name: yt
+        ports:
+            - '3000:3000'
+        volumes:
+            - ./downloads:/app/public/mp3
+        env_file:
+            - .env

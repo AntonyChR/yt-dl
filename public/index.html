@@ -1,0 +1,98 @@
+<!-- 
+    type PageData struct {
+	    Title     string
+	    Files     []string
+	    PublicDir string
+	    FilesDir  string
+    }
+ -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12"
+        integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2"
+        crossorigin="anonymous"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        article: '#171717',
+                        body: '#0a0a0a',
+                        ButtonRed: '#9e1c22',
+                        ButtonBlue: '#1c539e',
+                    }
+                }
+            }
+        }
+    </script>
+    <title>Download YT</title>
+</head>
+<body class="flex flex-col items-center bg-body md:py-8 text-white">
+    <main class="w-full md:w-[70vw] lg:w-[50vw] xl:w-[45vw] p-3 flex flex-col gap-4">
+        <article class="bg-article p-4 rounded-xl">
+            <form id="form" hx-post="/dl" class="flex flex-col gap-5 [&>div]:flex [&>div]:flex-col" hx-swap="none"
+                hx-disabled-elt="this" hx-include="this" hx-indicator="#downloading">
+                <div>
+                    <label for="url">Youtube URL</label>
+                    <input class="text-black px-2" required type="text" name="url" placeholder="url">
+                </div>
+                <div>
+
+                    <label for="fileName">File Name*</label>
+                    <input class="text-black px-2" type="text" name="fileName" placeholder="*optional">
+                </div>
+                <button class="bg-[#1c539e] disabled:cursor-wait">Download</button>
+            </form>
+        </article>
+
+        <!-- FILES  -->
+        <div class="relative">
+            <div class="downloading" id="downloading"></div>
+            <article id="files" hx-get="/files" hx-trigger="load" class="bg-article p-5 rounded-xl">
+            </article>
+        </div>
+
+    </main>
+</body>
+<script>
+    document.addEventListener("htmx:afterRequest", function (event) {
+        if (event.detail.target.id === "delete" || event.detail.target.id === "form") {
+            htmx.ajax('GET', '/files', { target: '#files' });
+        }
+    });
+    document.addEventListener('htmx:configRequest', (event) => {
+        if (event.detail.target.id === "form") {
+            document.getElementById('form').reset();
+        }
+    });
+</script>
+<style>
+    .downloading {
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        background: conic-gradient(#0000 10%, #47D115);
+        -webkit-mask: radial-gradient(farthest-side, #0000 calc(100% - 8px), #000 0);
+        animation: s3 0.3s infinite linear;
+        position: absolute;
+        right: 20px;
+        top: 10px;
+        display: none;
+    }
+
+    .downloading.htmx-request {
+        display: block;
+    }
+
+    @keyframes s3 {
+        to {
+            transform: rotate(1turn)
+        }
+    }
+</style>
+</html>
