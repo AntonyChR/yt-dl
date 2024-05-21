@@ -8,3 +8,4 @@ services:
             - ./downloads:/app/public/mp3
         env_file:
             - .env
+        restart: unless-stopped
