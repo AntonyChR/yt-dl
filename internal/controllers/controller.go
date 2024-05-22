@@ -4,6 +4,8 @@ import (
 	"html/template"
 	"net/http"
 	"yt-dl/internal"
+
+	"github.com/google/uuid"
 )
 
 type Controller struct {
@@ -11,6 +13,7 @@ type Controller struct {
 	MP3Dir           string
 	TelegramBotToken string
 	TelegramChatId   string
+	LogSSEManager    *internal.LogSSEManager
 }
 
 type PageData struct {
@@ -39,7 +42,9 @@ func (c *Controller) SendToTelegram(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	println("==>> Sending file: " + fileName + " to telegram")
+	log := "==>> Sending file: " + fileName + " to telegram"
+	println(log)
+	c.LogSSEManager.LogsChannel <- log
 	telegram := internal.Telegram{
 		BaseUrl:  "https://api.telegram.org/bot",
 		BotToken: c.TelegramBotToken,
@@ -57,8 +62,10 @@ func (c *Controller) DownloadVideoAsMp3(w http.ResponseWriter, r *http.Request) 
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	println("==>> Downloading video from: " + videoUrl)
-	err := internal.DownloadVideo(videoUrl, c.MP3Dir, fileName)
+	log := "==>> Downloading video from: " + videoUrl
+	println(log)
+	c.LogSSEManager.LogsChannel <- log
+	err := internal.DownloadVideo(videoUrl, c.MP3Dir, fileName, c.LogSSEManager.LogsChannel)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -73,11 +80,35 @@ func (c *Controller) DeleteFileByFileName(w http.ResponseWriter, r *http.Request
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	println("==>> Deleting file: " + fileName)
+	log := "==>> Deleting file: " + fileName
+	println(log)
+	c.LogSSEManager.LogsChannel <- log
 	err := internal.DeleteFile(c.MP3Dir + "/" + fileName)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	} else {
 		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func (c *Controller) ServerLogsSSE(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+
+	clientId := uuid.New().String()
+
+	c.LogSSEManager.Register(w, clientId)
+
+	println("==>> Client connected:", clientId)
+	w.(http.Flusher).Flush()
+
+	done := r.Context().Done()
+	for {
+		<-done
+		println("==>> Client disconnected: ", clientId)
+		c.LogSSEManager.Unregister(clientId)
+		return
 	}
 }

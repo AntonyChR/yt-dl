@@ -21,11 +21,15 @@ func main() {
 		panic(err)
 	}
 
+	logSSEManager := internal.NewLogSSEManager()
+	go logSSEManager.Start()
+
 	controller := controllers.Controller{
 		PublicDir:        PUBLIC_DIR,
 		MP3Dir:           MP3_DIR,
 		TelegramBotToken: TELEGRAM_BOT_TOKEN,
 		TelegramChatId:   TELEGRAM_CHAT_ID,
+		LogSSEManager:    logSSEManager,
 	}
 
 	http.HandleFunc("POST /dl", controller.DownloadVideoAsMp3)
@@ -36,6 +40,8 @@ func main() {
 	http.HandleFunc("POST /delete", controller.DeleteFileByFileName)
 
 	http.HandleFunc("GET /files", controller.FileList)
+
+	http.HandleFunc("GET /logs", controller.ServerLogsSSE)
 
 	fs := http.FileServer(http.Dir("./public"))
 	http.Handle("/public/", http.StripPrefix("/public/", fs))

@@ -16,6 +16,7 @@
     <script src="https://unpkg.com/htmx.org@1.9.12"
         integrity="sha384-ujb1lZYygJmzgSwoxRggbCHcjc0rB2XoQrxeTUQyRjrOnlCoYta87iKBWq3EsdM2"
         crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/sse.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -56,6 +57,9 @@
             <article id="files" hx-get="/files" hx-trigger="load" class="bg-article p-5 rounded-xl">
             </article>
         </div>
+        <article id="logs" hx-ext="sse" sse-connect="/logs" sse-swap="message" hx-swap="beforeend"
+            class="bg-article p-5 rounded-xl h-[250px] overflow-y-scroll">
+        </article>
 
     </main>
 </body>
