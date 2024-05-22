@@ -37,7 +37,7 @@ func main() {
 	// get "file" from query string and send it to telegram
 	http.HandleFunc("POST /send", controller.SendToTelegram)
 
-	http.HandleFunc("POST /delete", controller.DeleteFileByFileName)
+	http.HandleFunc("POST /delete", controller.DeleteFileByName)
 
 	http.HandleFunc("GET /files", controller.FileList)
 

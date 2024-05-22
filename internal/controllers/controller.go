@@ -44,7 +44,7 @@ func (c *Controller) SendToTelegram(w http.ResponseWriter, r *http.Request) {
 	}
 	log := "==>> Sending file: " + fileName + " to telegram"
 	println(log)
-	c.LogSSEManager.LogsChannel <- log
+	c.LogSSEManager.GreenLog(log)
 	telegram := internal.Telegram{
 		BaseUrl:  "https://api.telegram.org/bot",
 		BotToken: c.TelegramBotToken,
@@ -64,16 +64,17 @@ func (c *Controller) DownloadVideoAsMp3(w http.ResponseWriter, r *http.Request) 
 	}
 	log := "==>> Downloading video from: " + videoUrl
 	println(log)
-	c.LogSSEManager.LogsChannel <- log
-	err := internal.DownloadVideo(videoUrl, c.MP3Dir, fileName, c.LogSSEManager.LogsChannel)
+	c.LogSSEManager.GreenLog(log)
+	err := internal.DownloadVideo(videoUrl, c.MP3Dir, fileName, c.LogSSEManager)
 	if err != nil {
+		c.LogSSEManager.RedLog(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
 
-func (c *Controller) DeleteFileByFileName(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) DeleteFileByName(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	fileName := r.URL.Query().Get("fileName")
 	if fileName == "" {
@@ -82,7 +83,7 @@ func (c *Controller) DeleteFileByFileName(w http.ResponseWriter, r *http.Request
 	}
 	log := "==>> Deleting file: " + fileName
 	println(log)
-	c.LogSSEManager.LogsChannel <- log
+	c.LogSSEManager.RedLog(log)
 	err := internal.DeleteFile(c.MP3Dir + "/" + fileName)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

@@ -47,3 +47,15 @@ func (l *LogSSEManager) Broadcast(content string) {
 		client.(http.Flusher).Flush()
 	}
 }
+
+func (l *LogSSEManager) Log(log string) {
+	l.LogsChannel <- "<p>" + log + "</p>"
+}
+
+func (l *LogSSEManager) RedLog(log string) {
+	l.LogsChannel <- "<p class=\"text-red-600\">" + log + "</p>"
+}
+
+func (l *LogSSEManager) GreenLog(log string) {
+	l.LogsChannel <- "<p class=\"text-green-600\">" + log + "</p>"
+}

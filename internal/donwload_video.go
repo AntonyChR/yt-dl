@@ -6,7 +6,7 @@ import (
 	"os/exec"
 )
 
-func DownloadVideo(url, dir, fileName string, logsChann chan string) error {
+func DownloadVideo(url, dir, fileName string, logsChann *LogSSEManager) error {
 	finalFileName := " -o \"%(uploader)-s%(title)s.%(ext)s\" "
 	if fileName != "" {
 		finalFileName = fmt.Sprintf(" -o \"%s.%%(ext)s\" ", fileName)
@@ -16,39 +16,40 @@ func DownloadVideo(url, dir, fileName string, logsChann chan string) error {
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		logsChann <- "==>> Error downloading [error reading stdout pipe]: " + url
+		logsChann.RedLog("==>> Error downloading [error reading stdout pipe]: ")
 		return err
 	}
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
-		logsChann <- "==>> Error downloading [error reading stderr pipe]: " + url
+		logsChann.RedLog("==>> Error downloading [error reading stderr pipe]: " + url)
 		return err
 	}
 
 	go func() {
 		scanner := bufio.NewScanner(stdout)
 		for scanner.Scan() {
-			logsChann <- scanner.Text()
+			logsChann.Log(scanner.Text())
 		}
 	}()
 
 	go func() {
 		scanner := bufio.NewScanner(stderr)
 		for scanner.Scan() {
-			logsChann <- scanner.Text()
+			logsChann.Log(scanner.Text())
 		}
 	}()
 
 	if err := cmd.Start(); err != nil {
-		logsChann <- "==>> Error downloading: " + url
+		logsChann.RedLog("==>> Error downloading: " + url)
 		return err
 	}
 
 	if err := cmd.Wait(); err != nil {
-		logsChann <- "==>> Error downloading (wait): " + url
+		logsChann.RedLog("==>> Error downloading (wait): " + url)
 		return err
 	}
-
-	println("==>> Downloaded video")
+	log := "==>> Downloaded video"
+	println(log)
+	logsChann.GreenLog(log)
 	return nil
 }
